@@ -33,7 +33,7 @@ class MembersViewTests(TestCase):
         bob_user = User.objects.create_user(username="bob", password="pw")
         bob = Membership.objects.create_next(self.household, bob_user)
         chore = Chore.objects.create(household=self.household, name="Trash", last_rotation_order=-1)
-        week_start = current_week_start(self.household, today=datetime.date(2026, 1, 8))
+        week_start = current_week_start(self.household)
         assignment = WeeklyAssignment.objects.create(
             chore=chore, week_start_date=week_start, assigned_member=bob,
             status=WeeklyAssignment.PENDING,
