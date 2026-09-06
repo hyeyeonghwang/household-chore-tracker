@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 from .decorators import get_current_membership, household_required
 from .forms import ChoreForm, HouseholdForm
 from .models import Chore, Membership, WeeklyAssignment
-from .rotation import ensure_current_week
+from .rotation import current_week_start, ensure_current_week
 
 
 def signup(request):
@@ -126,3 +126,37 @@ def chore_delete(request, chore_id):
     chore = get_object_or_404(Chore, id=chore_id, household=household)
     chore.delete()
     return redirect("chores_list")
+
+
+@login_required
+@household_required
+def members_list(request):
+    household = request.membership.household
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            new_user = form.save()
+            Membership.objects.create_next(household, new_user)
+            return redirect("members_list")
+    else:
+        form = UserCreationForm()
+    memberships = household.memberships.all().order_by("rotation_order")
+    return render(request, "chores/members_list.html", {"memberships": memberships, "form": form})
+
+
+@login_required
+@household_required
+@require_POST
+def member_remove(request, membership_id):
+    household = request.membership.household
+    membership = get_object_or_404(
+        Membership, id=membership_id, household=household, is_active=True
+    )
+    membership.deactivate()
+    week_start = current_week_start(household)
+    WeeklyAssignment.objects.filter(
+        assigned_member=membership,
+        week_start_date=week_start,
+        status=WeeklyAssignment.PENDING,
+    ).update(assigned_member=None)
+    return redirect("members_list")
