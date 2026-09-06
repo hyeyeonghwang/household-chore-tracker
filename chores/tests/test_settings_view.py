@@ -31,3 +31,8 @@ class SettingsViewTests(TestCase):
         # rotation_day=2 (Wednesday); 2026-01-08 is a Thursday
         result = current_week_start(self.household, today=datetime.date(2026, 1, 8))
         self.assertEqual(result, datetime.date(2026, 1, 7))
+
+    def test_invalid_rotation_day_is_rejected(self):
+        response = self.client.post("/settings/", {"name": "Jones House", "rotation_day": 99})
+        self.household.refresh_from_db()
+        self.assertNotEqual(self.household.rotation_day, 99)

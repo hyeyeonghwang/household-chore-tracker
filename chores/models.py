@@ -4,8 +4,17 @@ from django.utils import timezone
 
 
 class Household(models.Model):
+    ROTATION_DAYS = [
+        (0, "Monday"),
+        (1, "Tuesday"),
+        (2, "Wednesday"),
+        (3, "Thursday"),
+        (4, "Friday"),
+        (5, "Saturday"),
+        (6, "Sunday"),
+    ]
     name = models.CharField(max_length=100)
-    rotation_day = models.IntegerField(default=0)  # 0=Monday ... 6=Sunday
+    rotation_day = models.IntegerField(default=0, choices=ROTATION_DAYS)
 
     def __str__(self):
         return self.name
