@@ -1,0 +1,33 @@
+<tr id="assignment-{{ assignment.id }}">
+  <td>{{ assignment.chore.name }}</td>
+  <td>{% if assignment.assigned_member %}{{ assignment.assigned_member.user.username }}{% else %}Unassigned{% endif %}</td>
+  <td>{{ assignment.get_status_display }}</td>
+  <td>
+    {% if assignment.status != "done" %}
+    <form
+      hx-post="{% url 'mark_done' assignment.id %}"
+      hx-target="#assignment-{{ assignment.id }}"
+      hx-swap="outerHTML"
+      style="display:inline">
+      {% csrf_token %}
+      <button type="submit">Mark done</button>
+    </form>
+    {% endif %}
+    <form
+      hx-post="{% url 'reassign' assignment.id %}"
+      hx-target="#assignment-{{ assignment.id }}"
+      hx-swap="outerHTML"
+      style="display:inline">
+      {% csrf_token %}
+      <select name="member_id" onchange="this.form.requestSubmit()">
+        {% for member in assignment.chore.household.memberships.all %}
+          {% if member.is_active %}
+          <option value="{{ member.id }}" {% if assignment.assigned_member_id == member.id %}selected{% endif %}>
+            {{ member.user.username }}
+          </option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </form>
+  </td>
+</tr>

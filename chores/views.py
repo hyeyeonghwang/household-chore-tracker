@@ -1,11 +1,13 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from .decorators import get_current_membership
+from .decorators import get_current_membership, household_required
 from .forms import HouseholdForm
-from .models import Membership
+from .models import Membership, WeeklyAssignment
+from .rotation import ensure_current_week
 
 
 def signup(request):
@@ -33,3 +35,51 @@ def create_household(request):
     else:
         form = HouseholdForm()
     return render(request, "chores/create_household.html", {"form": form})
+
+
+@login_required
+@household_required
+def this_week(request):
+    household = request.membership.household
+    week_start = ensure_current_week(household)
+    assignments = (
+        WeeklyAssignment.objects.filter(chore__household=household, week_start_date=week_start)
+        .select_related("chore", "assigned_member__user")
+        .order_by("chore__name")
+    )
+    active_members = household.memberships.filter(is_active=True).select_related("user")
+    return render(
+        request,
+        "chores/this_week.html",
+        {"assignments": assignments, "active_members": active_members},
+    )
+
+
+@login_required
+@household_required
+@require_POST
+def mark_done(request, assignment_id):
+    household = request.membership.household
+    assignment = get_object_or_404(
+        WeeklyAssignment, id=assignment_id, chore__household=household
+    )
+    assignment.status = WeeklyAssignment.DONE
+    assignment.save(update_fields=["status"])
+    return render(request, "chores/_assignment_row.html", {"assignment": assignment})
+
+
+@login_required
+@household_required
+@require_POST
+def reassign(request, assignment_id):
+    household = request.membership.household
+    assignment = get_object_or_404(
+        WeeklyAssignment, id=assignment_id, chore__household=household
+    )
+    member = get_object_or_404(
+        Membership, id=request.POST.get("member_id"), household=household, is_active=True
+    )
+    assignment.assigned_member = member
+    assignment.is_manual_override = True
+    assignment.save(update_fields=["assigned_member", "is_manual_override"])
+    return render(request, "chores/_assignment_row.html", {"assignment": assignment})

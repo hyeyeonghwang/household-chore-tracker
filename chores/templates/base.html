@@ -7,6 +7,13 @@
   <script src="{% static 'chores/htmx.min.js' %}"></script>
 </head>
 <body>
+  <nav>
+    <a href="{% url 'this_week' %}">This Week</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit">Logout</button>
+    </form>
+  </nav>
   {% block content %}{% endblock %}
 </body>
 </html>

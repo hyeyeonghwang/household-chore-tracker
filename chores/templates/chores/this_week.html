@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}This Week{% endblock %}
+{% block content %}
+<h1>This Week</h1>
+<table>
+  <thead>
+    <tr><th>Chore</th><th>Assigned</th><th>Status</th><th>Actions</th></tr>
+  </thead>
+  <tbody id="assignments">
+    {% for assignment in assignments %}
+      {% include "chores/_assignment_row.html" %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
