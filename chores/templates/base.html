@@ -11,6 +11,7 @@
     <a href="{% url 'this_week' %}">This Week</a>
     <a href="{% url 'chores_list' %}">Chores</a>
     <a href="{% url 'members_list' %}">Members</a>
+    <a href="{% url 'household_settings' %}">Settings</a>
     <form method="post" action="{% url 'logout' %}" style="display:inline">
       {% csrf_token %}
       <button type="submit">Logout</button>

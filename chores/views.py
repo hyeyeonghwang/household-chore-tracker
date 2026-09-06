@@ -160,3 +160,17 @@ def member_remove(request, membership_id):
         status=WeeklyAssignment.PENDING,
     ).update(assigned_member=None)
     return redirect("members_list")
+
+
+@login_required
+@household_required
+def household_settings(request):
+    household = request.membership.household
+    if request.method == "POST":
+        form = HouseholdForm(request.POST, instance=household)
+        if form.is_valid():
+            form.save()
+            return redirect("household_settings")
+    else:
+        form = HouseholdForm(instance=household)
+    return render(request, "chores/settings.html", {"form": form})

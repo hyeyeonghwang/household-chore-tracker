@@ -16,4 +16,5 @@ urlpatterns = [
     path("chores/<int:chore_id>/delete/", views.chore_delete, name="chore_delete"),
     path("members/", views.members_list, name="members_list"),
     path("members/<int:membership_id>/remove/", views.member_remove, name="member_remove"),
+    path("settings/", views.household_settings, name="household_settings"),
 ]
