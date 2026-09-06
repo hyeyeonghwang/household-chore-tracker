@@ -52,6 +52,7 @@ def ensure_current_week(household, today=None):
         chore__household=household
     ).aggregate(latest=Max("week_start_date"))["latest"]
     if latest is not None and week_start < latest + datetime.timedelta(days=7):
+        rotate_household(household, latest)
         return latest
     rotate_household(household, week_start)
     return week_start

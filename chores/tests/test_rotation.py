@@ -119,3 +119,13 @@ class RotationTests(TestCase):
         self.assertEqual(result_week_start, week1)
         assignment.refresh_from_db()
         self.assertEqual(assignment.status, WeeklyAssignment.DONE)
+
+    def test_chore_added_mid_week_after_rotation_still_gets_assigned(self):
+        week1 = datetime.date(2026, 1, 5)
+        ensure_current_week(self.household, today=week1)
+        new_chore = Chore.objects.create_with_offset(self.household, "Vacuum")
+        result_week_start = ensure_current_week(self.household, today=week1)
+        self.assertEqual(result_week_start, week1)
+        self.assertTrue(
+            WeeklyAssignment.objects.filter(chore=new_chore, week_start_date=week1).exists()
+        )

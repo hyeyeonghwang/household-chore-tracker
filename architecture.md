@@ -87,7 +87,7 @@ This module owns all pointer logic. Views never touch `last_rotation_order` dire
 
 ## Testing
 
-Django's built-in `TestCase` + test client throughout, one file per implementation task (`chores/tests/test_*.py`), 47 tests total, all exercising a real SQLite test database — no mocks. `chores/tests/test_login_required.py` specifically asserts anonymous access to all 9 household-scoped URLs redirects to `/login/`.
+Django's built-in `TestCase` + test client throughout, one file per implementation task (`chores/tests/test_*.py`), 48 tests total, all exercising a real SQLite test database — no mocks. `chores/tests/test_login_required.py` specifically asserts anonymous access to all 9 household-scoped URLs redirects to `/login/`.
 
 ## Known limitations (accepted for this MVP's scope)
 
@@ -96,7 +96,3 @@ These were surfaced during the final whole-branch review and ruled acceptable gi
 - **No transaction wrapping** around `Membership.objects.create_next`, `Chore.objects.create_with_offset`, or `rotate_household`'s per-chore loop. Concurrent requests can race; the outcomes are either a loud `IntegrityError` (guarded by unique constraints) or, in one case (`create_with_offset`), a silent cosmetic drift in chore-staggering — never data corruption. Not worth `select_for_update()`/`atomic()` overhead at this scale.
 - **`DEBUG=True` and a committed `SECRET_KEY`** in `config/settings.py` are Django's stock `startproject` output — fine for local-only use, would need addressing before any deployment.
 - **Deleting and re-adding chores can collapse the staggering invariant** (`Chore.objects.create_with_offset`'s seed formula depends on `Chore.objects.filter(household=household).count()`, which changes on delete). Cosmetic only — doesn't affect correctness of who's assigned, just how varied the stagger looks over time.
-
-## Open issue — not yet resolved
-
-**A chore added mid-week, after that week's rotation has already run, does not get assigned until the next rotation cycle.** This is a regression introduced by the `ensure_current_week` anchor fix (above): when the anchor guard decides "we're still within the current cycle, don't rotate," it currently skips calling `rotate_household` entirely, rather than still calling it (with the anchored `latest` date) to backfill any chore that's missing this week's row. `rotate_household` is idempotent per-chore, so calling it with `latest` instead of skipping would fix this without reintroducing the original mid-week-`rotation_day`-change bug. This was caught by the final review's fix-wave re-review, ruled load-bearing, and intentionally left unfixed pending an explicit decision (no further automated fix round was applied per the review process's one-shot final-fix-wave policy) — see the ledger for the exact prescribed fix and the reasoning.
