@@ -51,3 +51,17 @@ class MembersViewTests(TestCase):
         other_membership = Membership.objects.create_next(other_household, other_user)
         response = self.client.post(f"/members/{other_membership.id}/remove/")
         self.assertEqual(response.status_code, 404)
+
+    def test_cannot_remove_self(self):
+        bob_user = User.objects.create_user(username="bob", password="pw")
+        Membership.objects.create_next(self.household, bob_user)
+        response = self.client.post(f"/members/{self.alice.id}/remove/")
+        self.assertEqual(response.status_code, 302)
+        self.alice.refresh_from_db()
+        self.assertTrue(self.alice.is_active)
+
+    def test_cannot_remove_last_active_member(self):
+        response = self.client.post(f"/members/{self.alice.id}/remove/")
+        self.assertEqual(response.status_code, 302)
+        self.alice.refresh_from_db()
+        self.assertTrue(self.alice.is_active)

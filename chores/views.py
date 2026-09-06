@@ -152,6 +152,10 @@ def member_remove(request, membership_id):
     membership = get_object_or_404(
         Membership, id=membership_id, household=household, is_active=True
     )
+    if membership.id == request.membership.id:
+        return redirect("members_list")
+    if household.memberships.filter(is_active=True).count() <= 1:
+        return redirect("members_list")
     membership.deactivate()
     week_start = current_week_start(household)
     WeeklyAssignment.objects.filter(
