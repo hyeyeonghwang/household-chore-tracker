@@ -11,4 +11,7 @@ urlpatterns = [
     path("", views.this_week, name="this_week"),
     path("assignments/<int:assignment_id>/mark-done/", views.mark_done, name="mark_done"),
     path("assignments/<int:assignment_id>/reassign/", views.reassign, name="reassign"),
+    path("chores/", views.chores_list, name="chores_list"),
+    path("chores/<int:chore_id>/edit/", views.chore_edit, name="chore_edit"),
+    path("chores/<int:chore_id>/delete/", views.chore_delete, name="chore_delete"),
 ]

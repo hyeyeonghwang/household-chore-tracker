@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Chores{% endblock %}
+{% block content %}
+<h1>Chores</h1>
+<ul>
+  {% for chore in chores %}
+    <li>
+      {{ chore.name }}
+      <a href="{% url 'chore_edit' chore.id %}">Edit</a>
+      <form method="post" action="{% url 'chore_delete' chore.id %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+<h2>Add a chore</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

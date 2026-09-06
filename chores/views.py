@@ -5,8 +5,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .decorators import get_current_membership, household_required
-from .forms import HouseholdForm
-from .models import Membership, WeeklyAssignment
+from .forms import ChoreForm, HouseholdForm
+from .models import Chore, Membership, WeeklyAssignment
 from .rotation import ensure_current_week
 
 
@@ -82,3 +82,47 @@ def reassign(request, assignment_id):
     assignment.is_manual_override = True
     assignment.save(update_fields=["assigned_member", "is_manual_override"])
     return render(request, "chores/_assignment_row.html", {"assignment": assignment})
+
+
+@login_required
+@household_required
+def chores_list(request):
+    household = request.membership.household
+    if request.method == "POST":
+        form = ChoreForm(request.POST)
+        if form.is_valid():
+            Chore.objects.create_with_offset(
+                household,
+                form.cleaned_data["name"],
+                description=form.cleaned_data["description"],
+            )
+            return redirect("chores_list")
+    else:
+        form = ChoreForm()
+    chores = household.chores.all().order_by("name")
+    return render(request, "chores/chores_list.html", {"chores": chores, "form": form})
+
+
+@login_required
+@household_required
+def chore_edit(request, chore_id):
+    household = request.membership.household
+    chore = get_object_or_404(Chore, id=chore_id, household=household)
+    if request.method == "POST":
+        form = ChoreForm(request.POST, instance=chore)
+        if form.is_valid():
+            form.save()
+            return redirect("chores_list")
+    else:
+        form = ChoreForm(instance=chore)
+    return render(request, "chores/chore_form.html", {"form": form, "chore": chore})
+
+
+@login_required
+@household_required
+@require_POST
+def chore_delete(request, chore_id):
+    household = request.membership.household
+    chore = get_object_or_404(Chore, id=chore_id, household=household)
+    chore.delete()
+    return redirect("chores_list")

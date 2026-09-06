@@ -9,6 +9,7 @@
 <body>
   <nav>
     <a href="{% url 'this_week' %}">This Week</a>
+    <a href="{% url 'chores_list' %}">Chores</a>
     <form method="post" action="{% url 'logout' %}" style="display:inline">
       {% csrf_token %}
       <button type="submit">Logout</button>
