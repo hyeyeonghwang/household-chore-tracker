@@ -56,3 +56,27 @@ class ThisWeekViewTests(TestCase):
         )
         response = self.client.post(f"/assignments/{other_assignment.id}/mark-done/")
         self.assertEqual(response.status_code, 404)
+
+    def test_mark_done_returns_assignment_row_partial(self):
+        self.client.get("/")
+        assignment = WeeklyAssignment.objects.get(chore=self.chore)
+        response = self.client.post(f"/assignments/{assignment.id}/mark-done/")
+        self.assertTemplateUsed(response, "chores/_assignment_row.html")
+        self.assertContains(response, f'id="assignment-{assignment.id}"')
+
+    def test_reassign_returns_assignment_row_partial(self):
+        self.client.get("/")
+        assignment = WeeklyAssignment.objects.get(chore=self.chore)
+        response = self.client.post(
+            f"/assignments/{assignment.id}/reassign/", {"member_id": self.bob.id}
+        )
+        self.assertTemplateUsed(response, "chores/_assignment_row.html")
+        self.assertContains(response, f'id="assignment-{assignment.id}"')
+
+    def test_unassigned_row_shows_disabled_placeholder_option(self):
+        self.client.get("/")
+        assignment = WeeklyAssignment.objects.get(chore=self.chore)
+        assignment.assigned_member = None
+        assignment.save()
+        response = self.client.get("/")
+        self.assertContains(response, '<option value="" disabled selected>')

@@ -20,6 +20,9 @@
       style="display:inline">
       {% csrf_token %}
       <select name="member_id" onchange="this.form.requestSubmit()">
+        {% if not assignment.assigned_member_id %}
+        <option value="" disabled selected>— Unassigned —</option>
+        {% endif %}
         {% for member in assignment.chore.household.memberships.all %}
           {% if member.is_active %}
           <option value="{{ member.id }}" {% if assignment.assigned_member_id == member.id %}selected{% endif %}>
