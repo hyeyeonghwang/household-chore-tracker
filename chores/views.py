@@ -47,11 +47,10 @@ def this_week(request):
         .select_related("chore", "assigned_member__user")
         .order_by("chore__name")
     )
-    active_members = household.memberships.filter(is_active=True).select_related("user")
     return render(
         request,
         "chores/this_week.html",
-        {"assignments": assignments, "active_members": active_members},
+        {"assignments": assignments},
     )
 
 
