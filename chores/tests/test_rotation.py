@@ -85,3 +85,37 @@ class RotationTests(TestCase):
         self.assertTrue(
             WeeklyAssignment.objects.filter(chore=self.chore, week_start_date=week_start).exists()
         )
+
+    def test_new_member_not_eligible_until_next_rotation(self):
+        week1 = datetime.date(2026, 1, 5)
+        rotate_household(self.household, week1)
+        User.objects.create_user(username="dave", password="pw")
+        current = WeeklyAssignment.objects.get(chore=self.chore, week_start_date=week1)
+        self.assertEqual(current.assigned_member, self.alice)
+        week2 = datetime.date(2026, 1, 12)
+        rotate_household(self.household, week2)
+        next_assignment = WeeklyAssignment.objects.get(chore=self.chore, week_start_date=week2)
+        self.assertEqual(next_assignment.assigned_member, self.bob)
+
+    def test_removed_member_is_skipped_in_subsequent_rotation(self):
+        week1 = datetime.date(2026, 1, 5)
+        rotate_household(self.household, week1)
+        self.bob.deactivate()
+        week2 = datetime.date(2026, 1, 12)
+        rotate_household(self.household, week2)
+        assignment2 = WeeklyAssignment.objects.get(chore=self.chore, week_start_date=week2)
+        self.assertEqual(assignment2.assigned_member, self.carol)
+
+    def test_rotation_day_change_mid_week_does_not_trigger_early_rotation(self):
+        week1 = datetime.date(2026, 1, 5)
+        ensure_current_week(self.household, today=week1)
+        assignment = WeeklyAssignment.objects.get(chore=self.chore, week_start_date=week1)
+        assignment.status = WeeklyAssignment.DONE
+        assignment.save()
+        self.household.rotation_day = 2
+        self.household.save()
+        thursday_same_week = datetime.date(2026, 1, 8)
+        result_week_start = ensure_current_week(self.household, today=thursday_same_week)
+        self.assertEqual(result_week_start, week1)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, WeeklyAssignment.DONE)

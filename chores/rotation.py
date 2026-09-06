@@ -1,5 +1,6 @@
 import datetime
 
+from django.db.models import Max
 from django.utils import timezone
 
 from .models import WeeklyAssignment
@@ -47,5 +48,10 @@ def current_week_start(household, today=None):
 
 def ensure_current_week(household, today=None):
     week_start = current_week_start(household, today=today)
+    latest = WeeklyAssignment.objects.filter(
+        chore__household=household
+    ).aggregate(latest=Max("week_start_date"))["latest"]
+    if latest is not None and week_start < latest + datetime.timedelta(days=7):
+        return latest
     rotate_household(household, week_start)
     return week_start
